@@ -99,7 +99,7 @@ export default function CareersPage() {
               return whenever you need to.
             </p>
             <div style={{ display: "flex", gap: "var(--sp-3)", flexWrap: "wrap" }}>
-              <LinkButton href="/apply" variant="gold" size="lg">
+              <LinkButton href="https://rsipf-ats.vercel.app/" variant="gold" size="lg">
                 Start your application <ArrowRightIcon />
               </LinkButton>
               <LinkButton href="/contact" variant="secondary" size="lg">
@@ -233,7 +233,7 @@ export default function CareersPage() {
           </div>
           <div style={{ display: "flex", gap: "var(--sp-3)", flexWrap: "wrap" }}>
             <Badge variant="gold">2026 intake · opens 01 Jun</Badge>
-            <LinkButton href="/apply" variant="gold" size="lg">
+            <LinkButton href="https://rsipf-ats.vercel.app/" variant="gold" size="lg">
               Check eligibility <ArrowRightIcon />
             </LinkButton>
           </div>
