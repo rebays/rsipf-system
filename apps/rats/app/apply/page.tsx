@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, CalendarOff, RotateCcw } from "lucide-react";
 
 import { BrandBar } from "@/components/brand";
@@ -58,6 +58,14 @@ function parseYesNo(s: string): boolean | null {
 }
 
 export default function ApplyPage() {
+  return (
+    <Suspense fallback={null}>
+      <ApplyPageInner />
+    </Suspense>
+  );
+}
+
+function ApplyPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { hydrated, application, save, reset } = useApplication();
