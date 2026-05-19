@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cp \"/tmp/design/rats/project/Sentinel Design System.html\" /tmp/design/sentinel.html)",
+      "Read(//tmp/design/**)",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(echo \"started PID $!\")",
+      "Read(//tmp/**)",
+      "Bash(curl *)",
+      "Bash(npx tsc *)",
+      "Bash(taskkill //F //PID 30320)"
+    ]
+  }
+}

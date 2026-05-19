@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/gsaemane/projects/rsipf-system/apps/rats/app/**)",
+      "Read(//c/Users/gsaemane/projects/rsipf-system/apps/rats/components/**)",
+      "Read(//c/Users/gsaemane/projects/rsipf-system/apps/rats/lib/**)",
+      "Bash(git -C . branch -a)",
+      "Bash(git -C . stash list)",
+      "Bash(git -C ../rats branch -a)",
+      "Bash(git -C ../rats stash list)",
+      "Bash(git -C . remote -v)",
+      "Bash(rm -rf .git)",
+      "Bash(rm -rf ../rats/.git)"
+    ]
+  }
+}
