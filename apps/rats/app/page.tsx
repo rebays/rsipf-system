@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -9,7 +10,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-import { BrandBar, Seal } from "@/components/brand";
+import { BrandBar } from "@/components/brand";
 import { Footer } from "@/components/layout";
 import {
   Alert,
@@ -93,7 +94,14 @@ export default function HomePage() {
               </Link>
             </div>
           </div>
-          <Seal className="landing-hero__seal" />
+          <Image
+            src="/rsipf-badge.png"
+            alt="Royal Solomon Islands Police Force badge"
+            width={200}
+            height={240}
+            className="landing-hero__seal"
+            priority
+          />
         </div>
       </section>
 

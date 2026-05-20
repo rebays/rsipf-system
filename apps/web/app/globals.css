@@ -177,8 +177,11 @@ hr { border: 0; border-top: 1px solid var(--gray-200); margin: var(--sp-12) 0; }
   padding: var(--sp-4) var(--sp-8);
   background: var(--navy-800);
   color: var(--white);
-  border-bottom: 3px solid var(--gold-500);
   gap: var(--sp-4);
+}
+.brandbar-ribbon {
+  height: 8px;
+  background: url("/police-ribbon.png") repeat-x center / auto 100%;
 }
 .brandbar__id { display: flex; align-items: center; gap: var(--sp-3); min-width: 0; }
 .brandbar__shield { width: 36px; height: 40px; flex: 0 0 auto; }

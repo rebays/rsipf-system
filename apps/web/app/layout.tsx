@@ -44,6 +44,7 @@ export default function RootLayout({
       <body>
         <GovBanner />
         <BrandBar />
+        <div className="brandbar-ribbon" aria-hidden />
         <SiteNav />
         <main>{children}</main>
         <Footer />

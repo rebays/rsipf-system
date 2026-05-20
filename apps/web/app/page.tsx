@@ -236,8 +236,8 @@ export default function HomePage() {
           >
             <div>
               <div className="eyebrow">★ Latest from RSIPF</div>
-              <h2 style={{ margin: "var(--sp-2) 0 var(--sp-3)" }}>
-                News & announcements
+              <h2  style={{ margin: "var(--sp-2) 0 var(--sp-3)" }}>
+                News & Announcements
               </h2>
               <p className="landing-section__lede" style={{ margin: 0 }}>
                 Operational updates, community programmes, and official
@@ -282,9 +282,9 @@ export default function HomePage() {
           {/* Left: community awareness spotlight */}
           <div className="awareness-card">
             <div className="awareness-card__eyebrow">★ Community awareness</div>
-            <h2 className="awareness-card__title">
+            <p className="awareness-card__title">
               Keeping communities informed and safe.
-            </h2>
+            </p>
             <p className="awareness-card__body">
               The RSIPF publishes regular safety updates, scam alerts, and
               community notices. Sign up for province-level bulletins through
