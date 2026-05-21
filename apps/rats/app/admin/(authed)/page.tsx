@@ -21,14 +21,16 @@ import type { Application, Decision } from "@/lib/application";
 
 function decisionBadge(decision: Decision | undefined) {
   switch (decision) {
-    case "offer":
-      return <Badge variant="success">Offer</Badge>;
-    case "reject":
-      return <Badge variant="danger">Reject</Badge>;
-    case "hold":
-      return <Badge variant="warn">Hold</Badge>;
+    case "selected":
+      return <Badge variant="success">Selected</Badge>;
+    case "notSelected":
+      return <Badge variant="danger">Not selected</Badge>;
+    case "onHold":
+      return <Badge variant="warn">On hold for next intake</Badge>;
+    case "shortlisted":
+      return <Badge variant="info">Shortlisted</Badge>;
     default:
-      return <Badge variant="info">Pending</Badge>;
+      return <Badge variant="neutral">Awaiting review</Badge>;
   }
 }
 
@@ -45,12 +47,12 @@ export default function AdminOverview() {
   }
 
   const total = applications.length;
-  const pending = applications.filter(
-    (a) => (a.decision ?? "pending") === "pending",
+  const inReview = applications.filter(
+    (a) => a.decision === undefined || a.decision === "shortlisted",
   ).length;
-  const hold = applications.filter((a) => a.decision === "hold").length;
-  const offered = applications.filter((a) => a.decision === "offer").length;
-  const rejected = applications.filter((a) => a.decision === "reject").length;
+  const onHold = applications.filter((a) => a.decision === "onHold").length;
+  const selected = applications.filter((a) => a.decision === "selected").length;
+  const notSelected = applications.filter((a) => a.decision === "notSelected").length;
 
   const recents = [...applications]
     .sort((a, b) => (b.submittedAt ?? "").localeCompare(a.submittedAt ?? ""))
@@ -80,20 +82,20 @@ export default function AdminOverview() {
             />
             <StatCard
               icon={Clock}
-              label="Pending review"
-              value={pending + hold}
+              label="In review / on hold"
+              value={inReview + onHold}
               tone="warn"
             />
             <StatCard
               icon={CheckCircle2}
-              label="Offers made"
-              value={offered}
+              label="Selected"
+              value={selected}
               tone="success"
             />
             <StatCard
               icon={XCircle}
-              label="Rejected"
-              value={rejected}
+              label="Not selected"
+              value={notSelected}
               tone="danger"
             />
           </div>

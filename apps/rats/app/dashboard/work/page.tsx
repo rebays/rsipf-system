@@ -12,6 +12,7 @@ import {
   Field,
   Icon,
   Input,
+  Select,
   Textarea,
 } from "@/components/ui";
 import {
@@ -74,7 +75,7 @@ export default function WorkPage() {
   }
   function handleContinue() {
     persist();
-    router.push("/dashboard/documents");
+    router.push("/dashboard/disclosures");
   }
 
   const probe = stageState(
@@ -123,21 +124,40 @@ export default function WorkPage() {
                 </Button>
               </div>
               <div className="grid-2">
-                <Field label="Employer" htmlFor={`work-emp-${entry.id}`} required>
+                <Field label="Employer / business name" htmlFor={`work-emp-${entry.id}`} required>
                   <Input
                     id={`work-emp-${entry.id}`}
                     value={entry.employer}
                     onChange={(e) => updateEntry(entry.id, { employer: e.target.value })}
-                    placeholder="Lagos Metro Co-operative"
+                    placeholder="e.g. Solomon Power"
                   />
                 </Field>
-                <Field label="Role" htmlFor={`work-role-${entry.id}`} required>
+                <Field label="Role / position" htmlFor={`work-role-${entry.id}`} required>
                   <Input
                     id={`work-role-${entry.id}`}
                     value={entry.role}
                     onChange={(e) => updateEntry(entry.id, { role: e.target.value })}
                     placeholder="Operations assistant"
                   />
+                </Field>
+                <Field
+                  label="Paid or volunteer?"
+                  htmlFor={`work-pay-${entry.id}`}
+                  required
+                >
+                  <Select
+                    id={`work-pay-${entry.id}`}
+                    value={entry.paymentType}
+                    onChange={(e) =>
+                      updateEntry(entry.id, {
+                        paymentType: e.target.value as "paid" | "volunteer" | "",
+                      })
+                    }
+                  >
+                    <option value="">Choose…</option>
+                    <option value="paid">Paid work</option>
+                    <option value="volunteer">Volunteer</option>
+                  </Select>
                 </Field>
                 <Field label="Start date" htmlFor={`work-start-${entry.id}`} required>
                   <Input
@@ -196,7 +216,7 @@ export default function WorkPage() {
           backLabel="Back to education"
           onSave={handleSave}
           onContinue={handleContinue}
-          continueLabel="Save and continue to documents"
+          continueLabel="Save and continue to disclosures"
           savedAt={savedAt}
         />
       </div>

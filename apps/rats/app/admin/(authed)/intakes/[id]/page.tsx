@@ -101,7 +101,7 @@ export default function EditIntakePage() {
   }
 
   const linked = applications.filter((a) => a.intakeId === draft.id);
-  const offers = linked.filter((a) => a.decision === "offer").length;
+  const offers = linked.filter((a) => a.decision === "selected").length;
 
   function setStatus(status: IntakeStatus) {
     setDraft((prev) => (prev ? { ...prev, status } : prev));

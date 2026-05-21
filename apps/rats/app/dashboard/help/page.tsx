@@ -16,11 +16,11 @@ const FAQ = [
   },
   {
     q: "What documents do I need?",
-    a: "At minimum: your national ID (front and back), secondary school transcript, proof of residential address, and a passport-style photograph. A first-aid certificate and letters of recommendation are optional but encouraged.",
+    a: "At minimum: your Form 5 certificate, proof of citizenship or permanent residency (birth certificate or Solomon Islands passport), two written references, a doctor-signed Medical Fitness Form, and a passport-style photograph. Further academic qualifications can be attached if you have them.",
   },
   {
     q: "What happens after I submit?",
-    a: "A records officer verifies your documents and references within five business days. You'll then receive scheduled dates for the written, physical, psychological, and medical assessments.",
+    a: "The Recruitment Panel checks your documents, runs a criminal-record check, and contacts your referees. If you pass pre-selection, you'll be scheduled for the entrance examination (Dictation, Maths, General Knowledge, Reading & Comprehension, and Essay), the Entry Fitness Test (2.4 km run, press-ups, sit-ups), and the selection interview. Successful applicants are announced through the Solomon Star and SIBC.",
   },
   {
     q: "Why do I need two references?",

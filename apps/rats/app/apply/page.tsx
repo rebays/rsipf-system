@@ -15,18 +15,15 @@ import {
   Empty,
   Field,
   Icon,
-  Input,
   Select,
 } from "@/components/ui";
 import { EligibilityCheck } from "@/components/patterns";
 import {
-  ACADEMY_START,
   DEFAULT_ELIGIBILITY,
   emptyApplication,
   summarizeEligibility,
   type Application,
   type Citizenship,
-  type DriverClass,
   type EligibilityAnswers,
   type Intake,
 } from "@/lib/application";
@@ -92,11 +89,6 @@ function ApplyPageInner() {
     return openIntakes[0] ?? null;
   }, [requestedId, intakes, application, openIntakes]);
 
-  const intakeStartDate =
-    selectedIntake?.academyStartDate ??
-    application?.intakeAcademyStartDate ??
-    ACADEMY_START;
-
   useEffect(() => {
     if (application?.eligibility) {
       setAnswers(application.eligibility);
@@ -111,7 +103,7 @@ function ApplyPageInner() {
     setAnswers((prev) => ({ ...prev, [key]: value }));
   }
 
-  const summary = summarizeEligibility(answers, intakeStartDate);
+  const summary = summarizeEligibility(answers);
 
   function persist(): Application {
     const base = application ?? emptyApplication();
@@ -219,8 +211,9 @@ function ApplyPageInner() {
             body={
               <>
                 Applications close {fmtDate(selectedIntake.closeDate)} · academy
-                starts {fmtDate(selectedIntake.academyStartDate)}. Age and other
-                criteria are evaluated against the academy start date.
+                starts {fmtDate(selectedIntake.academyStartDate)}. This page is
+                a self-check — your supporting documents are uploaded from the
+                dashboard after sign-in.
               </>
             }
           />
@@ -261,7 +254,11 @@ function ApplyPageInner() {
           </header>
 
           <div className="grid-2">
-            <Field label="Citizenship status" htmlFor="ans-citizenship" required>
+            <Field
+              label="Are you a Solomon Islands citizen or permanent resident?"
+              htmlFor="ans-citizenship"
+              required
+            >
               <Select
                 id="ans-citizenship"
                 value={answers.citizenship ?? ""}
@@ -275,123 +272,85 @@ function ApplyPageInner() {
                 }
               >
                 <option value="">Choose…</option>
-                <option value="citizen">Citizen by birth</option>
-                <option value="naturalised">Naturalised citizen</option>
-                <option value="pr">Permanent resident</option>
-                <option value="no">None of the above</option>
-              </Select>
-            </Field>
-
-            <Field
-              label="Date of birth"
-              htmlFor="ans-dob"
-              required
-              hint={`Used to compute your age at academy start (${fmtDate(intakeStartDate)}).`}
-            >
-              <Input
-                id="ans-dob"
-                type="date"
-                value={answers.dob}
-                onChange={(e) => update("dob", e.target.value)}
-              />
-            </Field>
-
-            <Field
-              label="Do you hold a Senior Secondary Certificate?"
-              htmlFor="ans-edu"
-              required
-            >
-              <Select
-                id="ans-edu"
-                value={yesNoValue(answers.hasEducation)}
-                onChange={(e) =>
-                  update("hasEducation", parseYesNo(e.target.value))
-                }
-              >
-                <option value="">Choose…</option>
-                <option value="yes">Yes — I hold an SSC or equivalent</option>
+                <option value="citizen">Yes — Solomon Islands citizen by birth</option>
+                <option value="naturalised">Yes — naturalised citizen</option>
+                <option value="pr">Yes — permanent resident</option>
                 <option value="no">No</option>
               </Select>
             </Field>
 
             <Field
-              label="Height"
-              htmlFor="ans-height"
+              label="Have you successfully completed Form 5 or higher?"
+              htmlFor="ans-form5"
               required
-              hint="Enter in centimetres. Minimum 167 cm (1.67 m)."
-            >
-              <Input
-                id="ans-height"
-                type="number"
-                min={120}
-                max={230}
-                placeholder="e.g. 172"
-                value={answers.heightCm ?? ""}
-                onChange={(e) =>
-                  update(
-                    "heightCm",
-                    e.target.value === "" ? null : Number(e.target.value),
-                  )
-                }
-              />
-            </Field>
-
-            <Field
-              label="No prior felony convictions?"
-              htmlFor="ans-felony"
-              required
+              hint="A copy of your Form 5 certificate must be uploaded with your application."
             >
               <Select
-                id="ans-felony"
-                value={yesNoValue(answers.noFelony)}
+                id="ans-form5"
+                value={yesNoValue(answers.formFiveCompleted)}
                 onChange={(e) =>
-                  update("noFelony", parseYesNo(e.target.value))
-                }
-              >
-                <option value="">Choose…</option>
-                <option value="yes">Yes — I have no felony convictions</option>
-                <option value="no">
-                  No — I have a prior felony conviction
-                </option>
-              </Select>
-            </Field>
-
-            <Field label="Driver's licence" htmlFor="ans-licence" required>
-              <Select
-                id="ans-licence"
-                value={answers.driverLicence ?? ""}
-                onChange={(e) =>
-                  update(
-                    "driverLicence",
-                    e.target.value === ""
-                      ? null
-                      : (e.target.value as DriverClass),
-                  )
-                }
-              >
-                <option value="">Choose…</option>
-                <option value="none">None</option>
-                <option value="A">Class A (motorcycle)</option>
-                <option value="B">Class B (light vehicle)</option>
-                <option value="C+">Class C or higher</option>
-              </Select>
-            </Field>
-
-            <Field
-              label="First-aid certification within the last 24 months?"
-              htmlFor="ans-firstaid"
-              required
-              hint="Short course; available at any accredited provider."
-            >
-              <Select
-                id="ans-firstaid"
-                value={yesNoValue(answers.firstAid)}
-                onChange={(e) =>
-                  update("firstAid", parseYesNo(e.target.value))
+                  update("formFiveCompleted", parseYesNo(e.target.value))
                 }
               >
                 <option value="">Choose…</option>
                 <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </Select>
+            </Field>
+
+            <Field
+              label="Do you have a clean criminal record?"
+              htmlFor="ans-criminal"
+              required
+              hint="A criminal record check is run on every applicant. Domestic violence convictions also disqualify."
+            >
+              <Select
+                id="ans-criminal"
+                value={yesNoValue(answers.noCriminalRecord)}
+                onChange={(e) =>
+                  update("noCriminalRecord", parseYesNo(e.target.value))
+                }
+              >
+                <option value="">Choose…</option>
+                <option value="yes">Yes — no charges or convictions</option>
+                <option value="no">No — I have a record to disclose</option>
+              </Select>
+            </Field>
+
+            <Field
+              label="Are you medically fit for police duties?"
+              htmlFor="ans-medical"
+              required
+              hint="You must upload a Medical Fitness Form signed by a qualified doctor before submitting."
+            >
+              <Select
+                id="ans-medical"
+                value={yesNoValue(answers.medicallyFit)}
+                onChange={(e) =>
+                  update("medicallyFit", parseYesNo(e.target.value))
+                }
+              >
+                <option value="">Choose…</option>
+                <option value="yes">Yes — and I can arrange a doctor&apos;s examination</option>
+                <option value="no">No</option>
+              </Select>
+            </Field>
+
+            <Field
+              label="Are you physically fit for the Entry Fitness Test?"
+              htmlFor="ans-physical"
+              required
+              hint="2.4 km run, press-ups, and sit-ups. Pass marks differ for men and women."
+            >
+              <Select
+                id="ans-physical"
+                value={yesNoValue(answers.physicallyFit)}
+                onChange={(e) =>
+                  update("physicallyFit", parseYesNo(e.target.value))
+                }
+              >
+                <option value="">Choose…</option>
+                <option value="yes">Yes — I can attempt the test</option>
                 <option value="no">No</option>
               </Select>
             </Field>

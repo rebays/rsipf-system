@@ -261,8 +261,8 @@ export default function DocumentsPage() {
         </section>
 
         <StageNav
-          backHref="/dashboard/work"
-          backLabel="Back to work history"
+          backHref="/dashboard/statements"
+          backLabel="Back to statements"
           onSave={handleSave}
           onContinue={handleContinue}
           continueLabel="Save and continue to background check"

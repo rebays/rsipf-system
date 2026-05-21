@@ -226,7 +226,7 @@ function DraftView({
           <>
             <span>
               <Icon as={MapPin} />
-              Region 4
+              {application.personal.provinceOfOrigin || "Solomon Islands"}
             </span>
             <span>
               <Icon as={Calendar} />
@@ -361,13 +361,18 @@ function SubmittedView({
           }}
         >
           <li>
-            A records officer reviews your eligibility answers and supporting
-            documents.
+            Director, Human Resources routes your file to the Recruitment Panel,
+            who verify documents, run a criminal-record check, and contact your
+            referees.
           </li>
-          <li>You receive email confirmation within five business days.</li>
           <li>
-            Assessments are scheduled in your dashboard once verification is
-            complete.
+            If shortlisted, you sit the entrance examination, the Entry Fitness
+            Test, and a selection interview. Dates appear in your dashboard.
+          </li>
+          <li>
+            The Final Selection Report goes to the Commissioner of Police.
+            Successful applicants are announced through the Solomon Star and
+            SIBC.
           </li>
         </ol>
       </Card>

@@ -30,14 +30,16 @@ type IntakeFilter = "all" | string;
 
 function decisionBadge(decision: Decision | undefined) {
   switch (decision) {
-    case "offer":
-      return <Badge variant="success">Offer</Badge>;
-    case "reject":
-      return <Badge variant="danger">Reject</Badge>;
-    case "hold":
-      return <Badge variant="warn">Hold</Badge>;
+    case "selected":
+      return <Badge variant="success">Selected</Badge>;
+    case "notSelected":
+      return <Badge variant="danger">Not selected</Badge>;
+    case "onHold":
+      return <Badge variant="warn">On hold</Badge>;
+    case "shortlisted":
+      return <Badge variant="info">Shortlisted</Badge>;
     default:
-      return <Badge variant="info">Pending</Badge>;
+      return <Badge variant="neutral">Awaiting review</Badge>;
   }
 }
 
@@ -63,8 +65,7 @@ export default function ApplicationsListPage() {
     const lcq = query.trim().toLowerCase();
     return applications
       .filter((a) => {
-        const decision: Decision = a.decision ?? "pending";
-        if (filter !== "all" && decision !== filter) return false;
+        if (filter !== "all" && a.decision !== filter) return false;
         if (intakeFilter !== "all" && a.intakeId !== intakeFilter) return false;
         if (!lcq) return true;
         return (
@@ -121,10 +122,10 @@ export default function ApplicationsListPage() {
               onChange={(e) => setFilter(e.target.value as DecisionFilter)}
             >
               <option value="all">All decisions</option>
-              <option value="pending">Pending</option>
-              <option value="hold">Hold</option>
-              <option value="offer">Offer</option>
-              <option value="reject">Reject</option>
+              <option value="shortlisted">Shortlisted</option>
+              <option value="selected">Selected</option>
+              <option value="notSelected">Not selected</option>
+              <option value="onHold">On hold</option>
             </Select>
           </Field>
           <Field label="Intake" htmlFor="apps-intake-filter">

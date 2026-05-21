@@ -3,16 +3,18 @@
    ============================================================ */
 
 export type Citizenship = "citizen" | "naturalised" | "pr" | "no";
-export type DriverClass = "none" | "A" | "B" | "C+";
 
+/**
+ * RSIPF pre-selection requirements (2022 Recruitment Campaign Package, p.8).
+ * Each answer is a self-declaration on the eligibility page; medical and
+ * criminal-record claims are verified later in the admin pipeline.
+ */
 export type EligibilityAnswers = {
   citizenship: Citizenship | null;
-  dob: string;
-  hasEducation: boolean | null;
-  heightCm: number | null;
-  noFelony: boolean | null;
-  driverLicence: DriverClass | null;
-  firstAid: boolean | null;
+  noCriminalRecord: boolean | null;
+  formFiveCompleted: boolean | null;
+  medicallyFit: boolean | null;
+  physicallyFit: boolean | null;
 };
 
 export type Address = {
@@ -22,13 +24,65 @@ export type Address = {
   postcode: string;
 };
 
+export type Gender = "male" | "female";
+
+/**
+ * Driver's licence is informational on the Police Recruit Application form —
+ * "Do you have a current driver's licence?" with optional number/classes/expiry.
+ * Not a pre-selection requirement.
+ */
+export type DriverLicence = {
+  hasLicence: boolean | null;
+  number: string;
+  classes: string;
+  expiry: string;
+};
+
 export type Personal = {
   fullName: string;
   preferredName: string;
+  secondName: string;
+  dob: string;
+  gender: Gender | null;
   email: string;
   phone: string;
   nationalId: string;
+  birthPlace: string;
+  provinceOfOrigin: string;
+  provinceOfBirth: string;
+  religion: string;
+  marks: string;
   address: Address;
+  postalAddress: Address;
+  postalSameAsHome: boolean;
+  driverLicence: DriverLicence;
+};
+
+export type ServiceHistory = {
+  previousApplication: boolean | null;
+  previouslyPoliceOfficer: boolean | null;
+};
+
+/**
+ * Six yes/no disclosures from the Police Recruit Application form's
+ * "Disclosure of Relevant Information" section. Any 'yes' answer requires
+ * full details in the free-text field.
+ */
+export type Disclosures = {
+  everInterviewedForOffence: boolean | null;
+  currentlyInCriminalActivity: boolean | null;
+  everConvictedCriminal: boolean | null;
+  everConvictedOther: boolean | null;
+  noConvictionRecorded: boolean | null;
+  warrantEverIssued: boolean | null;
+  details: string;
+};
+
+export type Statements = {
+  /** ~200-word summary covering family, school, work, social history. */
+  personalStatement: string;
+  /** ~100-word summary of why the applicant wants to join the RSIPF. */
+  reasonForJoining: string;
 };
 
 export type EducationEntry = {
@@ -48,6 +102,8 @@ export type WorkEntry = {
   endDate: string;
   current: boolean;
   description: string;
+  /** Required field from the Police Recruit Application form. */
+  paymentType: "paid" | "volunteer" | "";
 };
 
 export type Reference = {
@@ -64,6 +120,7 @@ export type BackgroundInfo = {
     name: string;
     relationship: string;
     phone: string;
+    address: string;
   };
   references: Reference[];
   declarations: {
@@ -93,25 +150,214 @@ export type DocumentRecord = {
 
 export type ApplicationStatus = "draft" | "submitted";
 
-export type Decision = "pending" | "offer" | "reject" | "hold";
+/**
+ * Final classification of an application, using RSIPF vocabulary from the
+ * 2022 Recruitment Campaign Package. "On hold for next intake" maps to the
+ * 12-month retention rule for unsuccessful applicants.
+ */
+export type Decision = "shortlisted" | "selected" | "notSelected" | "onHold";
 
-export type AssessmentKey =
-  | "written"
-  | "physical-run"
-  | "physical-pushups"
-  | "psychological"
-  | "medical";
+/**
+ * Four-stage admin pipeline from the RSIPF recruitment package (p.5).
+ * 1. received       — applicant has submitted; Director HR routes to panel
+ * 2. preSelection   — Recruitment Panel verifies pre-selection requirements
+ * 3. selection      — entrance examination, fitness test, selection interview
+ * 4. final          — Final Selection Report → Commissioner → notification
+ * 5. closed         — terminal state once decision is communicated
+ */
+export type PipelineStage =
+  | "received"
+  | "preSelection"
+  | "selection"
+  | "final"
+  | "closed";
 
-export type AssessmentResult = {
-  key: AssessmentKey;
-  name: string;
-  date?: string;
-  score?: string;
-  passMark: string;
-  status: "scheduled" | "pass" | "fail" | "pending";
-  reference: string;
-  note?: string;
+export type StageOutcome = "pending" | "passed" | "failed" | "onHold";
+
+export type CompletenessCheck = {
+  allDocsPresent: boolean;
+  panelAcknowledged: boolean;
+  notes: string;
 };
+
+export type PreSelectionCheck = {
+  citizenship: StageOutcome;
+  criminalRecord: StageOutcome;
+  formFive: StageOutcome;
+  medical: StageOutcome;
+  physical: StageOutcome;
+  refereesContacted: boolean;
+  notes: string;
+};
+
+export type ExamScore = {
+  score: number | null;
+  status: StageOutcome;
+};
+
+export type ExamResults = {
+  dictation: ExamScore;
+  mathematics: ExamScore;
+  generalKnowledge: ExamScore;
+  readingComprehension: ExamScore;
+  essay: ExamScore;
+  date: string;
+};
+
+/** Pass mark for every exam part, per RSIPF spec p.9. */
+export const EXAM_PASS_MARK = 60;
+
+export type FitnessSubtestResult = {
+  /** Raw value: time in seconds for the run, count for push/sit-ups. */
+  raw: number | null;
+  status: StageOutcome;
+};
+
+export type FitnessTestResults = {
+  /** 2.4 km run time in seconds. Men ≤ 720s (12 min), women ≤ 840s (14 min). */
+  run: FitnessSubtestResult;
+  /** Push-ups without stopping. Men ≥ 15, women ≥ 8. */
+  pushUps: FitnessSubtestResult;
+  /** Sit-ups without stopping. Men ≥ 45, women ≥ 35. */
+  sitUps: FitnessSubtestResult;
+  date: string;
+  note: string;
+};
+
+/** Each interview rubric scored 1–5, plus per-rubric comments. */
+export type InterviewRating = 1 | 2 | 3 | 4 | 5;
+
+export type InterviewScore = {
+  rating: InterviewRating | null;
+  comments: string;
+};
+
+/** Five rubrics from the RSIPF spec p.13–15 (Interview Selection Requirements). */
+export type InterviewResults = {
+  goodCharacter: InterviewScore;
+  learning: InterviewScore;
+  teamMember: InterviewScore;
+  thinkingSkills: InterviewScore;
+  communication: InterviewScore;
+  date: string;
+  panelNotes: string;
+};
+
+export type SelectionResults = {
+  exam: ExamResults;
+  fitness: FitnessTestResults;
+  interview: InterviewResults;
+};
+
+export type FinalRecommendation = "select" | "notSelect" | "onHold" | null;
+
+export type FinalDecision = {
+  recommendation: FinalRecommendation;
+  commissionerApproved: boolean;
+  notifiedAt: string;
+  finalReport: string;
+};
+
+export type Pipeline = {
+  currentStage: PipelineStage;
+  received: CompletenessCheck;
+  preSelection: PreSelectionCheck;
+  selection: SelectionResults;
+  final: FinalDecision;
+};
+
+/** Pass thresholds for the Entry Fitness Test, per RSIPF spec p.10. */
+export const FITNESS_THRESHOLDS = {
+  male: { runSeconds: 12 * 60, pushUps: 15, sitUps: 45 },
+  female: { runSeconds: 14 * 60, pushUps: 8, sitUps: 35 },
+} as const;
+
+export function fitnessThresholdsFor(gender: Gender | null) {
+  if (gender === null) return null;
+  return FITNESS_THRESHOLDS[gender];
+}
+
+export function computeExamStatus(score: number | null): StageOutcome {
+  if (score === null) return "pending";
+  return score >= EXAM_PASS_MARK ? "passed" : "failed";
+}
+
+export function computeFitnessStatus(
+  subtest: "run" | "pushUps" | "sitUps",
+  raw: number | null,
+  gender: Gender | null,
+): StageOutcome {
+  if (raw === null || gender === null) return "pending";
+  const t = FITNESS_THRESHOLDS[gender];
+  if (subtest === "run") return raw <= t.runSeconds ? "passed" : "failed";
+  if (subtest === "pushUps") return raw >= t.pushUps ? "passed" : "failed";
+  return raw >= t.sitUps ? "passed" : "failed";
+}
+
+/** Pre-selection passes when every criterion is "passed" AND referees were contacted. */
+export function preSelectionOutcome(ps: PreSelectionCheck): StageOutcome {
+  const criteria = [
+    ps.citizenship,
+    ps.criminalRecord,
+    ps.formFive,
+    ps.medical,
+    ps.physical,
+  ];
+  if (criteria.some((c) => c === "failed")) return "failed";
+  if (criteria.some((c) => c === "pending") || !ps.refereesContacted)
+    return "pending";
+  if (criteria.every((c) => c === "passed")) return "passed";
+  return "pending";
+}
+
+/** Exam passes when every part scores ≥ EXAM_PASS_MARK. */
+export function examOverallOutcome(exam: ExamResults): StageOutcome {
+  const parts = [
+    exam.dictation,
+    exam.mathematics,
+    exam.generalKnowledge,
+    exam.readingComprehension,
+    exam.essay,
+  ];
+  if (parts.some((p) => p.status === "failed")) return "failed";
+  if (parts.some((p) => p.status === "pending")) return "pending";
+  return "passed";
+}
+
+export function fitnessOverallOutcome(f: FitnessTestResults): StageOutcome {
+  const subs = [f.run, f.pushUps, f.sitUps];
+  if (subs.some((s) => s.status === "failed")) return "failed";
+  if (subs.some((s) => s.status === "pending")) return "pending";
+  return "passed";
+}
+
+/**
+ * Interview overall: pass when every rubric is rated 3+ on the 1-5 scale.
+ * 1-2 in any rubric is treated as a failed interview.
+ */
+export function interviewOverallOutcome(i: InterviewResults): StageOutcome {
+  const ratings = [
+    i.goodCharacter.rating,
+    i.learning.rating,
+    i.teamMember.rating,
+    i.thinkingSkills.rating,
+    i.communication.rating,
+  ];
+  if (ratings.some((r) => r === null)) return "pending";
+  if (ratings.some((r) => (r as number) < 3)) return "failed";
+  return "passed";
+}
+
+export function selectionOutcome(s: SelectionResults): StageOutcome {
+  const outcomes = [
+    examOverallOutcome(s.exam),
+    fitnessOverallOutcome(s.fitness),
+    interviewOverallOutcome(s.interview),
+  ];
+  if (outcomes.some((o) => o === "failed")) return "failed";
+  if (outcomes.some((o) => o === "pending")) return "pending";
+  return "passed";
+}
 
 export type Application = {
   status: ApplicationStatus;
@@ -122,6 +368,9 @@ export type Application = {
   personal: Personal;
   education: EducationEntry[];
   work: WorkEntry[];
+  serviceHistory: ServiceHistory;
+  disclosures: Disclosures;
+  statements: Statements;
   documents: DocumentRecord[];
   background: BackgroundInfo;
   ownerEmail?: string;
@@ -130,10 +379,10 @@ export type Application = {
   submittedAt?: string;
   /* Admin-side fields. Optional because applicant-side never sets them. */
   decision?: Decision;
+  pipeline?: Pipeline;
   reviewerNotes?: string;
   reviewedAt?: string;
   reviewedBy?: string;
-  assessments?: AssessmentResult[];
 };
 
 export type User = {
@@ -176,12 +425,10 @@ export const DEFAULT_INTAKE_ID = "2026-B";
 
 export const DEFAULT_ELIGIBILITY: EligibilityAnswers = {
   citizenship: null,
-  dob: "",
-  hasEducation: null,
-  heightCm: null,
-  noFelony: null,
-  driverLicence: null,
-  firstAid: null,
+  noCriminalRecord: null,
+  formFiveCompleted: null,
+  medicallyFit: null,
+  physicallyFit: null,
 };
 
 export const EMPTY_ADDRESS: Address = {
@@ -191,60 +438,187 @@ export const EMPTY_ADDRESS: Address = {
   postcode: "",
 };
 
+export const EMPTY_DRIVER_LICENCE: DriverLicence = {
+  hasLicence: null,
+  number: "",
+  classes: "",
+  expiry: "",
+};
+
 export const EMPTY_PERSONAL: Personal = {
   fullName: "",
   preferredName: "",
+  secondName: "",
+  dob: "",
+  gender: null,
   email: "",
   phone: "",
   nationalId: "",
+  birthPlace: "",
+  provinceOfOrigin: "",
+  provinceOfBirth: "",
+  religion: "",
+  marks: "",
   address: { ...EMPTY_ADDRESS },
+  postalAddress: { ...EMPTY_ADDRESS },
+  postalSameAsHome: true,
+  driverLicence: { ...EMPTY_DRIVER_LICENCE },
 };
 
 export const EMPTY_BACKGROUND: BackgroundInfo = {
-  nextOfKin: { name: "", relationship: "", phone: "" },
+  nextOfKin: { name: "", relationship: "", phone: "", address: "" },
   references: [],
   declarations: { accurate: false, consent: false, medical: false },
 };
+
+export const EMPTY_SERVICE_HISTORY: ServiceHistory = {
+  previousApplication: null,
+  previouslyPoliceOfficer: null,
+};
+
+export const EMPTY_DISCLOSURES: Disclosures = {
+  everInterviewedForOffence: null,
+  currentlyInCriminalActivity: null,
+  everConvictedCriminal: null,
+  everConvictedOther: null,
+  noConvictionRecorded: null,
+  warrantEverIssued: null,
+  details: "",
+};
+
+export const EMPTY_STATEMENTS: Statements = {
+  personalStatement: "",
+  reasonForJoining: "",
+};
+
+const EMPTY_EXAM_SCORE: ExamScore = { score: null, status: "pending" };
+const EMPTY_FITNESS_SUBTEST: FitnessSubtestResult = {
+  raw: null,
+  status: "pending",
+};
+const EMPTY_INTERVIEW_SCORE: InterviewScore = { rating: null, comments: "" };
+
+export const EMPTY_PIPELINE: Pipeline = {
+  currentStage: "received",
+  received: {
+    allDocsPresent: false,
+    panelAcknowledged: false,
+    notes: "",
+  },
+  preSelection: {
+    citizenship: "pending",
+    criminalRecord: "pending",
+    formFive: "pending",
+    medical: "pending",
+    physical: "pending",
+    refereesContacted: false,
+    notes: "",
+  },
+  selection: {
+    exam: {
+      dictation: { ...EMPTY_EXAM_SCORE },
+      mathematics: { ...EMPTY_EXAM_SCORE },
+      generalKnowledge: { ...EMPTY_EXAM_SCORE },
+      readingComprehension: { ...EMPTY_EXAM_SCORE },
+      essay: { ...EMPTY_EXAM_SCORE },
+      date: "",
+    },
+    fitness: {
+      run: { ...EMPTY_FITNESS_SUBTEST },
+      pushUps: { ...EMPTY_FITNESS_SUBTEST },
+      sitUps: { ...EMPTY_FITNESS_SUBTEST },
+      date: "",
+      note: "",
+    },
+    interview: {
+      goodCharacter: { ...EMPTY_INTERVIEW_SCORE },
+      learning: { ...EMPTY_INTERVIEW_SCORE },
+      teamMember: { ...EMPTY_INTERVIEW_SCORE },
+      thinkingSkills: { ...EMPTY_INTERVIEW_SCORE },
+      communication: { ...EMPTY_INTERVIEW_SCORE },
+      date: "",
+      panelNotes: "",
+    },
+  },
+  final: {
+    recommendation: null,
+    commissionerApproved: false,
+    notifiedAt: "",
+    finalReport: "",
+  },
+};
+
+/** The 10 Solomon Islands provinces plus Honiara Capital Territory. */
+export const SI_PROVINCES = [
+  "Choiseul",
+  "Western",
+  "Isabel",
+  "Central",
+  "Rennell and Bellona",
+  "Guadalcanal",
+  "Malaita",
+  "Makira-Ulawa",
+  "Temotu",
+  "Honiara Capital Territory",
+] as const;
 
 export const REQUIRED_DOCUMENTS: Omit<
   DocumentRecord,
   "filename" | "sizeBytes" | "uploadedAt" | "status" | "note"
 >[] = [
   {
-    type: "national-id",
-    label: "National ID — front & back",
-    description: "Government-issued identity card or international passport.",
+    type: "citizenship-proof",
+    label: "Proof of citizenship or permanent residency",
+    description:
+      "Birth certificate, Solomon Islands passport, or a statutory declaration signed by a Commissioner of Oaths.",
     required: true,
   },
   {
-    type: "transcript",
-    label: "Secondary school transcript",
-    description: "Senior Secondary Certificate or equivalent.",
+    type: "form-5",
+    label: "Form 5 certificate",
+    description: "Form 5 certificate or higher. Upload a clear photocopy — keep your originals.",
     required: true,
   },
   {
-    type: "address-proof",
-    label: "Proof of residential address",
-    description: "Utility bill or bank statement issued in the last 3 months.",
+    type: "further-quals",
+    label: "Further qualifications",
+    description:
+      "Tertiary academic records, other certificates, or short-course records. Optional but recommended.",
+    required: false,
+  },
+  {
+    type: "reference-letter-1",
+    label: "Reference letter (1 of 2)",
+    description:
+      "Written reference from someone who knows you well — preferably a community leader, employer, or teacher.",
+    required: true,
+  },
+  {
+    type: "reference-letter-2",
+    label: "Reference letter (2 of 2)",
+    description:
+      "Second written reference. Together your two referees should speak to your character and life experience.",
+    required: true,
+  },
+  {
+    type: "medical-form-a",
+    label: "Medical Fitness Form — Part A",
+    description:
+      "Part A of the Medical Fitness Form completed and signed by you (the applicant).",
+    required: true,
+  },
+  {
+    type: "medical-form-b",
+    label: "Medical Fitness Form — Part B",
+    description:
+      "Part B of the Medical Fitness Form completed and signed by a qualified medical doctor after a full examination.",
     required: true,
   },
   {
     type: "passport-photo",
-    label: "Passport photograph",
-    description: "Recent front-facing photograph on a plain white background.",
+    label: "Passport-style photograph",
+    description: "Recent front-facing photograph on a plain background.",
     required: true,
-  },
-  {
-    type: "first-aid",
-    label: "First-aid certification",
-    description: "Optional if you hold one; required for some specialist units.",
-    required: false,
-  },
-  {
-    type: "recommendation",
-    label: "Letters of recommendation",
-    description: "Up to three letters from non-relatives who have known you for at least two years.",
-    required: false,
   },
 ];
 
@@ -292,6 +666,7 @@ export function newWorkEntry(): WorkEntry {
     endDate: "",
     current: false,
     description: "",
+    paymentType: "",
   };
 }
 
@@ -314,9 +689,17 @@ export function emptyApplication(): Application {
     intakeId: DEFAULT_INTAKE_ID,
     intakeAcademyStartDate: ACADEMY_START,
     eligibility: { ...DEFAULT_ELIGIBILITY },
-    personal: { ...EMPTY_PERSONAL, address: { ...EMPTY_ADDRESS } },
+    personal: {
+      ...EMPTY_PERSONAL,
+      address: { ...EMPTY_ADDRESS },
+      postalAddress: { ...EMPTY_ADDRESS },
+      driverLicence: { ...EMPTY_DRIVER_LICENCE },
+    },
     education: [],
     work: [],
+    serviceHistory: { ...EMPTY_SERVICE_HISTORY },
+    disclosures: { ...EMPTY_DISCLOSURES },
+    statements: { ...EMPTY_STATEMENTS },
     documents: initialDocuments(),
     background: {
       nextOfKin: { ...EMPTY_BACKGROUND.nextOfKin },
@@ -340,6 +723,10 @@ function asBool(v: unknown): boolean {
   return typeof v === "boolean" ? v : false;
 }
 
+function asBoolOrNull(v: unknown): boolean | null {
+  return typeof v === "boolean" ? v : null;
+}
+
 function asObject(v: unknown): Raw {
   return typeof v === "object" && v !== null ? (v as Raw) : {};
 }
@@ -349,9 +736,14 @@ export function normalizeApplication(raw: unknown): Application {
   const now = new Date().toISOString();
   const personal = asObject(r.personal);
   const address = asObject(personal.address);
+  const postalAddress = asObject(personal.postalAddress);
+  const driverLicence = asObject(personal.driverLicence);
   const background = asObject(r.background);
   const nok = asObject(background.nextOfKin);
   const decl = asObject(background.declarations);
+  const serviceHistory = asObject(r.serviceHistory);
+  const disclosures = asObject(r.disclosures);
+  const statements = asObject(r.statements);
 
   const storedDocs = Array.isArray(r.documents) ? (r.documents as Raw[]) : [];
   const documents: DocumentRecord[] = REQUIRED_DOCUMENTS.map((spec) => {
@@ -389,6 +781,12 @@ export function normalizeApplication(raw: unknown): Application {
         endDate: asString(w.endDate),
         current: asBool(w.current),
         description: asString(w.description),
+        paymentType:
+          w.paymentType === "paid"
+            ? ("paid" as const)
+            : w.paymentType === "volunteer"
+              ? ("volunteer" as const)
+              : ("" as const),
       }))
     : [];
 
@@ -418,46 +816,91 @@ export function normalizeApplication(raw: unknown): Application {
         eligibility.citizenship === "no"
           ? eligibility.citizenship
           : null,
-      dob: asString(eligibility.dob),
-      hasEducation:
-        typeof eligibility.hasEducation === "boolean"
-          ? eligibility.hasEducation
+      noCriminalRecord:
+        typeof eligibility.noCriminalRecord === "boolean"
+          ? eligibility.noCriminalRecord
           : null,
-      heightCm:
-        typeof eligibility.heightCm === "number" ? eligibility.heightCm : null,
-      noFelony:
-        typeof eligibility.noFelony === "boolean" ? eligibility.noFelony : null,
-      driverLicence:
-        eligibility.driverLicence === "none" ||
-        eligibility.driverLicence === "A" ||
-        eligibility.driverLicence === "B" ||
-        eligibility.driverLicence === "C+"
-          ? eligibility.driverLicence
+      formFiveCompleted:
+        typeof eligibility.formFiveCompleted === "boolean"
+          ? eligibility.formFiveCompleted
           : null,
-      firstAid:
-        typeof eligibility.firstAid === "boolean" ? eligibility.firstAid : null,
+      medicallyFit:
+        typeof eligibility.medicallyFit === "boolean"
+          ? eligibility.medicallyFit
+          : null,
+      physicallyFit:
+        typeof eligibility.physicallyFit === "boolean"
+          ? eligibility.physicallyFit
+          : null,
     },
     personal: {
       fullName: asString(personal.fullName),
       preferredName: asString(personal.preferredName),
+      secondName: asString(personal.secondName),
+      dob: asString(personal.dob),
+      gender:
+        personal.gender === "male" || personal.gender === "female"
+          ? personal.gender
+          : null,
       email: asString(personal.email),
       phone: asString(personal.phone),
       nationalId: asString(personal.nationalId),
+      birthPlace: asString(personal.birthPlace),
+      provinceOfOrigin: asString(personal.provinceOfOrigin),
+      provinceOfBirth: asString(personal.provinceOfBirth),
+      religion: asString(personal.religion),
+      marks: asString(personal.marks),
       address: {
         street: asString(address.street),
         city: asString(address.city),
         region: asString(address.region),
         postcode: asString(address.postcode),
       },
+      postalAddress: {
+        street: asString(postalAddress.street),
+        city: asString(postalAddress.city),
+        region: asString(postalAddress.region),
+        postcode: asString(postalAddress.postcode),
+      },
+      postalSameAsHome:
+        typeof personal.postalSameAsHome === "boolean"
+          ? personal.postalSameAsHome
+          : true,
+      driverLicence: {
+        hasLicence: asBoolOrNull(driverLicence.hasLicence),
+        number: asString(driverLicence.number),
+        classes: asString(driverLicence.classes),
+        expiry: asString(driverLicence.expiry),
+      },
     },
     education,
     work,
+    serviceHistory: {
+      previousApplication: asBoolOrNull(serviceHistory.previousApplication),
+      previouslyPoliceOfficer: asBoolOrNull(
+        serviceHistory.previouslyPoliceOfficer,
+      ),
+    },
+    disclosures: {
+      everInterviewedForOffence: asBoolOrNull(disclosures.everInterviewedForOffence),
+      currentlyInCriminalActivity: asBoolOrNull(disclosures.currentlyInCriminalActivity),
+      everConvictedCriminal: asBoolOrNull(disclosures.everConvictedCriminal),
+      everConvictedOther: asBoolOrNull(disclosures.everConvictedOther),
+      noConvictionRecorded: asBoolOrNull(disclosures.noConvictionRecorded),
+      warrantEverIssued: asBoolOrNull(disclosures.warrantEverIssued),
+      details: asString(disclosures.details),
+    },
+    statements: {
+      personalStatement: asString(statements.personalStatement),
+      reasonForJoining: asString(statements.reasonForJoining),
+    },
     documents,
     background: {
       nextOfKin: {
         name: asString(nok.name),
         relationship: asString(nok.relationship),
         phone: asString(nok.phone),
+        address: asString(nok.address),
       },
       references,
       declarations: {
@@ -470,53 +913,126 @@ export function normalizeApplication(raw: unknown): Application {
     createdAt: asString(r.createdAt, now),
     updatedAt: asString(r.updatedAt, now),
     submittedAt: typeof r.submittedAt === "string" ? r.submittedAt : undefined,
-    decision:
-      r.decision === "offer" ||
-      r.decision === "reject" ||
-      r.decision === "hold" ||
-      r.decision === "pending"
-        ? r.decision
-        : undefined,
+    decision: normalizeDecision(r.decision),
+    pipeline: r.pipeline !== undefined ? normalizePipeline(r.pipeline) : undefined,
     reviewerNotes:
       typeof r.reviewerNotes === "string" ? r.reviewerNotes : undefined,
     reviewedAt: typeof r.reviewedAt === "string" ? r.reviewedAt : undefined,
     reviewedBy: typeof r.reviewedBy === "string" ? r.reviewedBy : undefined,
-    assessments: Array.isArray(r.assessments)
-      ? ((r.assessments as Raw[])
-          .map((a) => ({
-            key: asString(a.key) as AssessmentKey,
-            name: asString(a.name),
-            date: typeof a.date === "string" ? a.date : undefined,
-            score: typeof a.score === "string" ? a.score : undefined,
-            passMark: asString(a.passMark),
-            status:
-              a.status === "pass" ||
-              a.status === "fail" ||
-              a.status === "pending"
-                ? a.status
-                : "scheduled",
-            reference: asString(a.reference),
-            note: typeof a.note === "string" ? a.note : undefined,
-          })) as AssessmentResult[])
-      : undefined,
+  };
+}
+
+function normalizeDecision(v: unknown): Decision | undefined {
+  return v === "shortlisted" ||
+    v === "selected" ||
+    v === "notSelected" ||
+    v === "onHold"
+    ? v
+    : undefined;
+}
+
+function normalizeStageOutcome(v: unknown): StageOutcome {
+  return v === "passed" || v === "failed" || v === "onHold" ? v : "pending";
+}
+
+function normalizePipelineStage(v: unknown): PipelineStage {
+  return v === "preSelection" ||
+    v === "selection" ||
+    v === "final" ||
+    v === "closed"
+    ? v
+    : "received";
+}
+
+function normalizeExamScore(v: unknown): ExamScore {
+  const o = asObject(v);
+  return {
+    score: typeof o.score === "number" ? o.score : null,
+    status: normalizeStageOutcome(o.status),
+  };
+}
+
+function normalizeFitnessSubtest(v: unknown): FitnessSubtestResult {
+  const o = asObject(v);
+  return {
+    raw: typeof o.raw === "number" ? o.raw : null,
+    status: normalizeStageOutcome(o.status),
+  };
+}
+
+function normalizeInterviewScore(v: unknown): InterviewScore {
+  const o = asObject(v);
+  const r = o.rating;
+  const rating: InterviewRating | null =
+    r === 1 || r === 2 || r === 3 || r === 4 || r === 5 ? r : null;
+  return { rating, comments: asString(o.comments) };
+}
+
+function normalizeFinalRecommendation(v: unknown): FinalRecommendation {
+  return v === "select" || v === "notSelect" || v === "onHold" ? v : null;
+}
+
+function normalizePipeline(v: unknown): Pipeline {
+  const o = asObject(v);
+  const received = asObject(o.received);
+  const ps = asObject(o.preSelection);
+  const sel = asObject(o.selection);
+  const exam = asObject(sel.exam);
+  const fitness = asObject(sel.fitness);
+  const interview = asObject(sel.interview);
+  const final = asObject(o.final);
+  return {
+    currentStage: normalizePipelineStage(o.currentStage),
+    received: {
+      allDocsPresent: asBool(received.allDocsPresent),
+      panelAcknowledged: asBool(received.panelAcknowledged),
+      notes: asString(received.notes),
+    },
+    preSelection: {
+      citizenship: normalizeStageOutcome(ps.citizenship),
+      criminalRecord: normalizeStageOutcome(ps.criminalRecord),
+      formFive: normalizeStageOutcome(ps.formFive),
+      medical: normalizeStageOutcome(ps.medical),
+      physical: normalizeStageOutcome(ps.physical),
+      refereesContacted: asBool(ps.refereesContacted),
+      notes: asString(ps.notes),
+    },
+    selection: {
+      exam: {
+        dictation: normalizeExamScore(exam.dictation),
+        mathematics: normalizeExamScore(exam.mathematics),
+        generalKnowledge: normalizeExamScore(exam.generalKnowledge),
+        readingComprehension: normalizeExamScore(exam.readingComprehension),
+        essay: normalizeExamScore(exam.essay),
+        date: asString(exam.date),
+      },
+      fitness: {
+        run: normalizeFitnessSubtest(fitness.run),
+        pushUps: normalizeFitnessSubtest(fitness.pushUps),
+        sitUps: normalizeFitnessSubtest(fitness.sitUps),
+        date: asString(fitness.date),
+        note: asString(fitness.note),
+      },
+      interview: {
+        goodCharacter: normalizeInterviewScore(interview.goodCharacter),
+        learning: normalizeInterviewScore(interview.learning),
+        teamMember: normalizeInterviewScore(interview.teamMember),
+        thinkingSkills: normalizeInterviewScore(interview.thinkingSkills),
+        communication: normalizeInterviewScore(interview.communication),
+        date: asString(interview.date),
+        panelNotes: asString(interview.panelNotes),
+      },
+    },
+    final: {
+      recommendation: normalizeFinalRecommendation(final.recommendation),
+      commissionerApproved: asBool(final.commissionerApproved),
+      notifiedAt: asString(final.notifiedAt),
+      finalReport: asString(final.finalReport),
+    },
   };
 }
 
 /* ─── Eligibility evaluation ─── */
-
-export function calculateAgeAtIntake(
-  dobIso: string,
-  intakeIso: string = ACADEMY_START,
-): number | null {
-  if (!dobIso) return null;
-  const dob = new Date(dobIso);
-  const intake = new Date(intakeIso);
-  if (Number.isNaN(dob.getTime()) || Number.isNaN(intake.getTime())) return null;
-  let age = intake.getFullYear() - dob.getFullYear();
-  const m = intake.getMonth() - dob.getMonth();
-  if (m < 0 || (m === 0 && intake.getDate() < dob.getDate())) age--;
-  return age;
-}
 
 export type CriterionResult = {
   key: string;
@@ -525,27 +1041,17 @@ export type CriterionResult = {
   status: "met" | "fail" | "pending";
 };
 
-function formatAcademyStart(iso: string): string {
-  if (!iso) return "academy start";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString(undefined, {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-}
-
-export function evaluateEligibility(
-  answers: EligibilityAnswers,
-  intakeAcademyStartDate: string = ACADEMY_START,
-): CriterionResult[] {
-  const age = calculateAgeAtIntake(answers.dob, intakeAcademyStartDate);
-  const academyLabel = formatAcademyStart(intakeAcademyStartDate);
+/**
+ * Five pre-selection requirements from the RSIPF 2022 Recruit Information
+ * and Application Package (p.8). Citizenship and Form 5 are documentary;
+ * criminal record, medical fitness, and physical fitness start as
+ * self-declarations and are verified during Stage 2 of the admin pipeline.
+ */
+export function evaluateEligibility(answers: EligibilityAnswers): CriterionResult[] {
   return [
     {
       key: "citizenship",
-      name: "Citizenship",
+      name: "Citizen or permanent resident of Solomon Islands",
       detail:
         answers.citizenship === "citizen"
           ? "Citizen by birth"
@@ -564,85 +1070,68 @@ export function evaluateEligibility(
             : "met",
     },
     {
-      key: "age",
-      name: "Age — at least 21 by start of academy",
-      detail: !answers.dob
-        ? "Date of birth required"
-        : age !== null
-          ? `${age} years at academy start (${academyLabel})`
-          : "Date of birth required",
+      key: "criminal",
+      name: "No criminal record",
+      detail:
+        answers.noCriminalRecord === true
+          ? "Self-declared · subject to background verification"
+          : answers.noCriminalRecord === false
+            ? "Declared a criminal record"
+            : "Awaiting answer",
       status:
-        !answers.dob || age === null ? "pending" : age >= 21 ? "met" : "fail",
+        answers.noCriminalRecord === null
+          ? "pending"
+          : answers.noCriminalRecord
+            ? "met"
+            : "fail",
     },
     {
       key: "education",
-      name: "Education — Senior Secondary Certificate",
+      name: "Successfully completed Form 5 or higher",
       detail:
-        answers.hasEducation === true
-          ? "SSC confirmed"
-          : answers.hasEducation === false
-            ? "Does not hold SSC"
+        answers.formFiveCompleted === true
+          ? "Form 5 certificate confirmed — copy required at submission"
+          : answers.formFiveCompleted === false
+            ? "Form 5 not completed"
             : "Awaiting answer",
       status:
-        answers.hasEducation === null
+        answers.formFiveCompleted === null
           ? "pending"
-          : answers.hasEducation
+          : answers.formFiveCompleted
             ? "met"
             : "fail",
     },
     {
-      key: "height",
-      name: "Height — minimum 1.67 m",
+      key: "medical",
+      name: "Medically fit for police duties",
       detail:
-        answers.heightCm !== null
-          ? `${(answers.heightCm / 100).toFixed(2)} m`
-          : "Awaiting answer",
+        answers.medicallyFit === true
+          ? "Self-declared · doctor-signed Medical Fitness Form required"
+          : answers.medicallyFit === false
+            ? "Cannot certify medical fitness"
+            : "Awaiting answer",
       status:
-        answers.heightCm === null
+        answers.medicallyFit === null
           ? "pending"
-          : answers.heightCm >= 167
+          : answers.medicallyFit
             ? "met"
             : "fail",
     },
     {
-      key: "felony",
-      name: "No felony convictions",
+      key: "physical",
+      name: "Physically fit for the Entry Fitness Test",
       detail:
-        answers.noFelony === true
-          ? "Self-declared · subject to background verification"
-          : answers.noFelony === false
-            ? "Declared a prior felony conviction"
+        answers.physicallyFit === true
+          ? "Confident of passing the 2.4 km run, press-ups, and sit-ups"
+          : answers.physicallyFit === false
+            ? "Not currently able to attempt the Entry Fitness Test"
             : "Awaiting answer",
       status:
-        answers.noFelony === null ? "pending" : answers.noFelony ? "met" : "fail",
-    },
-    {
-      key: "licence",
-      name: "Driver's licence — Class B or higher",
-      detail:
-        answers.driverLicence === null
-          ? "Awaiting answer"
-          : answers.driverLicence === "none"
-            ? "No licence held"
-            : `Class ${answers.driverLicence}`,
-      status:
-        answers.driverLicence === null
+        answers.physicallyFit === null
           ? "pending"
-          : answers.driverLicence === "B" || answers.driverLicence === "C+"
+          : answers.physicallyFit
             ? "met"
             : "fail",
-    },
-    {
-      key: "firstAid",
-      name: "First-aid certification (within 24 months)",
-      detail:
-        answers.firstAid === true
-          ? "Current certification held"
-          : answers.firstAid === false
-            ? "Not held — enrol in a short course before submitting"
-            : "Awaiting answer",
-      status:
-        answers.firstAid === null ? "pending" : answers.firstAid ? "met" : "fail",
     },
   ];
 }
@@ -657,11 +1146,8 @@ export type EligibilitySummary = {
   allMet: boolean;
 };
 
-export function summarizeEligibility(
-  answers: EligibilityAnswers,
-  intakeAcademyStartDate: string = ACADEMY_START,
-): EligibilitySummary {
-  const results = evaluateEligibility(answers, intakeAcademyStartDate);
+export function summarizeEligibility(answers: EligibilityAnswers): EligibilitySummary {
+  const results = evaluateEligibility(answers);
   const met = results.filter((r) => r.status === "met").length;
   const fail = results.filter((r) => r.status === "fail").length;
   const pending = results.filter((r) => r.status === "pending").length;
@@ -683,6 +1169,8 @@ export type StageKey =
   | "personal"
   | "education"
   | "work"
+  | "disclosures"
+  | "statements"
   | "documents"
   | "background"
   | "submit";
@@ -701,42 +1189,59 @@ export const STAGES: StageMeta[] = [
     key: "eligibility",
     name: "Eligibility",
     href: "/apply",
-    description: "Confirm you meet the published criteria.",
+    description: "Confirm you meet the RSIPF pre-selection requirements.",
     contributesToProgress: true,
   },
   {
     key: "personal",
-    name: "Personal details",
+    name: "Personal particulars",
     href: "/dashboard/personal",
-    description: "Your legal name, contact, and address.",
+    description:
+      "Legal name, date of birth, province, address, contact details, and driver's licence.",
     contributesToProgress: true,
   },
   {
     key: "education",
     name: "Education",
     href: "/dashboard/education",
-    description: "Schools, certificates, and results.",
+    description: "Form 5 certificate and any further qualifications.",
     contributesToProgress: true,
   },
   {
     key: "work",
-    name: "Work history",
+    name: "Employment",
     href: "/dashboard/work",
-    description: "Past and current employment.",
+    description: "Past and current paid or volunteer work.",
+    contributesToProgress: true,
+  },
+  {
+    key: "disclosures",
+    name: "Disclosures",
+    href: "/dashboard/disclosures",
+    description:
+      "Previous police service, prior application, and the six required disclosure questions.",
+    contributesToProgress: true,
+  },
+  {
+    key: "statements",
+    name: "Personal statements",
+    href: "/dashboard/statements",
+    description:
+      "About yourself (~200 words) and why you want to join the RSIPF (~100 words).",
     contributesToProgress: true,
   },
   {
     key: "documents",
     name: "Documents",
     href: "/dashboard/documents",
-    description: "Upload supporting evidence.",
+    description: "Upload supporting evidence including the Medical Fitness Form.",
     contributesToProgress: true,
   },
   {
     key: "background",
     name: "Background check",
     href: "/dashboard/background",
-    description: "Next of kin, references, and declarations.",
+    description: "Next of kin, two written references, and declarations.",
     contributesToProgress: true,
   },
   {
@@ -754,13 +1259,16 @@ export type StageState = {
   detail: string;
 };
 
+export function wordCount(s: string): number {
+  const trimmed = s.trim();
+  if (!trimmed) return 0;
+  return trimmed.split(/\s+/).length;
+}
+
 export function stageState(app: Application, key: StageKey): StageState {
   switch (key) {
     case "eligibility": {
-      const s = summarizeEligibility(
-        app.eligibility,
-        app.intakeAcademyStartDate ?? ACADEMY_START,
-      );
+      const s = summarizeEligibility(app.eligibility);
       return {
         complete: s.allComplete,
         passing: s.allComplete && s.allMet,
@@ -773,21 +1281,34 @@ export function stageState(app: Application, key: StageKey): StageState {
     }
     case "personal": {
       const p = app.personal;
-      const required = [
+      const requiredStrings = [
         p.fullName,
+        p.dob,
         p.email,
         p.phone,
-        p.nationalId,
+        p.birthPlace,
+        p.provinceOfOrigin,
+        p.religion,
         p.address.street,
         p.address.city,
         p.address.region,
       ];
-      const filled = required.filter((v) => v.trim().length > 0).length;
-      const complete = filled === required.length;
+      const filledStrings = requiredStrings.filter((v) => v.trim().length > 0).length;
+      const hasGender = p.gender !== null;
+      const hasLicenceAnswer = p.driverLicence.hasLicence !== null;
+      const postalOk =
+        p.postalSameAsHome ||
+        (p.postalAddress.street.trim() &&
+          p.postalAddress.city.trim() &&
+          p.postalAddress.region.trim());
+      const totalChecks = requiredStrings.length + 3; // + gender, licence, postal
+      const passed =
+        filledStrings + (hasGender ? 1 : 0) + (hasLicenceAnswer ? 1 : 0) + (postalOk ? 1 : 0);
+      const complete = passed === totalChecks;
       return {
         complete,
         passing: complete,
-        detail: complete ? "Complete" : `${filled} of ${required.length} fields`,
+        detail: complete ? "Complete" : `${passed} of ${totalChecks} required fields`,
       };
     }
     case "education": {
@@ -808,12 +1329,14 @@ export function stageState(app: Application, key: StageKey): StageState {
     case "work": {
       const entries = app.work;
       const validEntries = entries.filter(
-        (w) => w.employer.trim() && w.role.trim() && w.startDate.trim(),
+        (w) =>
+          w.employer.trim() &&
+          w.role.trim() &&
+          w.startDate.trim() &&
+          w.paymentType !== "",
       );
       // Work history is optional but the page must be visited.
-      // We mark complete if there's at least one valid entry OR the user has
-      // saved an empty page (handled by tracking on save in localStorage; for
-      // simplicity, treat any save with no entries as opting out, valid).
+      // Treat any save with no entries as a valid "no work history to declare".
       const complete = validEntries.length >= 1 || entries.length === 0;
       return {
         complete,
@@ -824,6 +1347,50 @@ export function stageState(app: Application, key: StageKey): StageState {
             : entries.length === 0
               ? "Not started — optional"
               : "Incomplete entries",
+      };
+    }
+    case "disclosures": {
+      const s = app.serviceHistory;
+      const d = app.disclosures;
+      const yesNoFields = [
+        s.previousApplication,
+        s.previouslyPoliceOfficer,
+        d.everInterviewedForOffence,
+        d.currentlyInCriminalActivity,
+        d.everConvictedCriminal,
+        d.everConvictedOther,
+        d.noConvictionRecorded,
+        d.warrantEverIssued,
+      ];
+      const answered = yesNoFields.filter((v) => v !== null).length;
+      const anyYes = yesNoFields.some((v) => v === true);
+      const detailsOk = !anyYes || d.details.trim().length > 0;
+      const complete = answered === yesNoFields.length && detailsOk;
+      return {
+        complete,
+        passing: complete,
+        detail: complete
+          ? "Complete"
+          : answered < yesNoFields.length
+            ? `${answered} of ${yesNoFields.length} questions answered`
+            : "Provide details for the questions answered Yes",
+      };
+    }
+    case "statements": {
+      const st = app.statements;
+      const pCount = wordCount(st.personalStatement);
+      const rCount = wordCount(st.reasonForJoining);
+      const personalOk = pCount >= 100;
+      const reasonOk = rCount >= 50;
+      const complete = personalOk && reasonOk;
+      return {
+        complete,
+        passing: complete,
+        detail: complete
+          ? `Personal ${pCount} words · Reason ${rCount} words`
+          : !personalOk
+            ? `Personal statement: ${pCount}/100 minimum`
+            : `Reason for joining: ${rCount}/50 minimum`,
       };
     }
     case "documents": {
@@ -844,7 +1411,8 @@ export function stageState(app: Application, key: StageKey): StageState {
       const nokOk =
         b.nextOfKin.name.trim() &&
         b.nextOfKin.relationship.trim() &&
-        b.nextOfKin.phone.trim();
+        b.nextOfKin.phone.trim() &&
+        b.nextOfKin.address.trim();
       const refsOk =
         b.references.filter((r) => r.name.trim() && r.phone.trim()).length >= 2;
       const declOk = b.declarations.accurate && b.declarations.consent;
@@ -855,7 +1423,7 @@ export function stageState(app: Application, key: StageKey): StageState {
         detail: complete
           ? "Complete"
           : !nokOk
-            ? "Add next-of-kin contact"
+            ? "Add next-of-kin contact (including address)"
             : !refsOk
               ? "Add at least two references"
               : "Confirm declarations",
@@ -925,7 +1493,6 @@ export function upsertAdminApplication(app: Application): Application[] {
   const idx = list.findIndex((a) => a.applicantId === app.applicantId);
   const stamped: Application = {
     ...app,
-    decision: app.decision ?? "pending",
     updatedAt: new Date().toISOString(),
   };
   if (idx >= 0) list[idx] = stamped;
@@ -939,7 +1506,6 @@ export function pushToAdminQueue(app: Application): Application[] {
     ...app,
     status: "submitted",
     submittedAt: app.submittedAt ?? new Date().toISOString(),
-    decision: app.decision ?? "pending",
   });
 }
 
@@ -955,12 +1521,6 @@ export function ensureSeedAdminApplications(): Application[] {
 /* ============================================================
    Demo seed data — four applications across decision states
    ============================================================ */
-
-function ageDateForYears(years: number): string {
-  const d = new Date();
-  d.setFullYear(d.getFullYear() - years);
-  return d.toISOString().slice(0, 10);
-}
 
 function buildSeedApplications(): Application[] {
   const now = new Date().toISOString();
@@ -992,9 +1552,17 @@ function buildSeedApplications(): Application[] {
     intakeId: DEFAULT_INTAKE_ID,
     intakeAcademyStartDate: ACADEMY_START,
     eligibility: { ...DEFAULT_ELIGIBILITY },
-    personal: { ...EMPTY_PERSONAL, address: { ...EMPTY_ADDRESS } },
+    personal: {
+      ...EMPTY_PERSONAL,
+      address: { ...EMPTY_ADDRESS },
+      postalAddress: { ...EMPTY_ADDRESS },
+      driverLicence: { ...EMPTY_DRIVER_LICENCE },
+    },
     education: [],
     work: [],
+    serviceHistory: { ...EMPTY_SERVICE_HISTORY },
+    disclosures: { ...EMPTY_DISCLOSURES },
+    statements: { ...EMPTY_STATEMENTS },
     documents: docsFor(),
     background: {
       nextOfKin: { ...EMPTY_BACKGROUND.nextOfKin },
@@ -1004,39 +1572,51 @@ function buildSeedApplications(): Application[] {
     createdAt: now,
     updatedAt: now,
     submittedAt: now,
-    decision: "pending",
+    decision: "shortlisted",
     ...overrides,
   });
 
-  const adaeze = base("APP-2026-04713", {
-    ownerEmail: "adaeze.okafor@example.com",
+  const joycelyn = base("APP-2026-04713", {
+    ownerEmail: "joycelyn.tagivetua@example.com",
     eligibility: {
       citizenship: "citizen",
-      dob: ageDateForYears(23),
-      hasEducation: true,
-      heightCm: 172,
-      noFelony: true,
-      driverLicence: "B",
-      firstAid: true,
+      noCriminalRecord: true,
+      formFiveCompleted: true,
+      medicallyFit: true,
+      physicallyFit: true,
     },
     personal: {
-      fullName: "Adaeze Okafor",
-      preferredName: "Adaeze",
-      email: "adaeze.okafor@example.com",
-      phone: "+234 803 555 1234",
-      nationalId: "12345678901",
+      ...EMPTY_PERSONAL,
+      fullName: "Tagivetua Joycelyn",
+      preferredName: "Joycelyn",
+      dob: "2003-08-12",
+      gender: "female",
+      email: "joycelyn.tagivetua@example.com",
+      phone: "+677 7497 1124",
+      nationalId: "SI24-00451",
+      birthPlace: "Honiara",
+      provinceOfOrigin: "Honiara Capital Territory",
+      religion: "Anglican (Church of Melanesia)",
       address: {
-        street: "14 Oba Akran Avenue",
-        city: "Ikeja",
-        region: "Lagos",
-        postcode: "100271",
+        street: "5 Vavaea Ridge",
+        city: "Honiara",
+        region: "Honiara Capital Territory",
+        postcode: "",
+      },
+      postalAddress: { ...EMPTY_ADDRESS },
+      postalSameAsHome: true,
+      driverLicence: {
+        hasLicence: true,
+        number: "SI-HCT-1187",
+        classes: "B",
+        expiry: "2028-04",
       },
     },
     education: [
       {
         id: "e1",
-        institution: "Federal Government College Lagos",
-        qualification: "Senior Secondary Certificate",
+        institution: "King George VI National Secondary School",
+        qualification: "Form 5 certificate",
         startYear: "2015",
         endYear: "2021",
         result: "6 credits incl. English & Maths",
@@ -1045,74 +1625,114 @@ function buildSeedApplications(): Application[] {
     work: [
       {
         id: "w1",
-        employer: "Lagos Metro Co-operative",
-        role: "Operations assistant",
+        employer: "Solomon Telekom",
+        role: "Customer service assistant",
         startDate: "2022-06",
         endDate: "",
         current: true,
-        description: "Coordinates daily logistics for a 40-person co-operative.",
+        description:
+          "First point of contact for retail customers; handles SIM activations and account queries.",
+        paymentType: "paid",
       },
     ],
+    serviceHistory: { previousApplication: false, previouslyPoliceOfficer: false },
+    disclosures: {
+      everInterviewedForOffence: false,
+      currentlyInCriminalActivity: false,
+      everConvictedCriminal: false,
+      everConvictedOther: false,
+      noConvictionRecorded: false,
+      warrantEverIssued: false,
+      details: "",
+    },
+    statements: {
+      personalStatement:
+        "Born and raised in Honiara, I am the eldest of three siblings. My mother is a primary-school teacher at Naha and my father drives for the Solomon Islands Ports Authority. I completed Form 5 at King George VI National Secondary School in 2021 with six credits including English and Maths. Since then I have worked at Solomon Telekom in the retail section, where I am the first person customers meet when they walk in. The work has taught me to be patient with frustrated people and to be careful with private information. Outside work I am part of my church's St John youth fellowship and I volunteer with the weekend feeding programme for street kids in central Honiara. Being trusted and being useful to my community matters to me more than anything else, which is why police work has always been at the back of my mind.",
+      reasonForJoining:
+        "I want to join the RSIPF because the country needs a police force that people can trust, and I am willing to be one of the officers who earns that trust. I am especially drawn to working with women and children, two groups who too often feel they cannot turn to the police. The recruit programme would give me the discipline and skills I need to do that work properly.",
+    },
     documents: docsFor(),
     background: {
       nextOfKin: {
-        name: "Ifeoma Okafor",
+        name: "Anna Tagivetua",
         relationship: "Mother",
-        phone: "+234 803 555 9876",
+        phone: "+677 7421 8867",
+        address: "5 Vavaea Ridge, Honiara",
       },
       references: [
         {
           id: "r1",
-          name: "Mr Adebayo Lawal",
+          name: "Mr Joseph Sade",
           relationship: "Secondary school principal",
           yearsKnown: "8",
-          email: "alawal@fgclagos.edu",
-          phone: "+234 802 555 1111",
+          email: "jsade@kgvi.edu.sb",
+          phone: "+677 7421 0011",
         },
         {
           id: "r2",
-          name: "Ms Funke Adesina",
-          relationship: "Co-op manager",
+          name: "Ms Lillian Pita",
+          relationship: "Team leader",
           yearsKnown: "3",
-          email: "fadesina@lmc.example",
-          phone: "+234 802 555 2222",
+          email: "lpita@solomontelekom.com.sb",
+          phone: "+677 7421 0022",
         },
       ],
       declarations: { accurate: true, consent: true, medical: true },
     },
-    decision: "pending",
+    decision: "shortlisted",
+    pipeline: {
+      ...EMPTY_PIPELINE,
+      currentStage: "preSelection",
+      received: {
+        allDocsPresent: true,
+        panelAcknowledged: true,
+        notes: "Complete package received and routed to Recruitment Panel.",
+      },
+    },
     reviewerNotes: "",
   });
 
-  const tunde = base("APP-2026-04692", {
-    ownerEmail: "tunde.adesanya@example.com",
+  const theo = base("APP-2026-04692", {
+    ownerEmail: "theo.maeli@example.com",
     eligibility: {
       citizenship: "citizen",
-      dob: ageDateForYears(25),
-      hasEducation: true,
-      heightCm: 178,
-      noFelony: true,
-      driverLicence: "C+",
-      firstAid: false,
+      noCriminalRecord: true,
+      formFiveCompleted: true,
+      medicallyFit: true,
+      physicallyFit: true,
     },
     personal: {
-      fullName: "Tunde Adesanya",
-      preferredName: "Tunde",
-      email: "tunde.adesanya@example.com",
-      phone: "+234 805 222 3344",
-      nationalId: "22334455667",
+      ...EMPTY_PERSONAL,
+      fullName: "Maeli Theo",
+      preferredName: "Theo",
+      dob: "2001-02-19",
+      gender: "male",
+      email: "theo.maeli@example.com",
+      phone: "+677 7488 3344",
+      nationalId: "SI22-00284",
+      birthPlace: "Gizo",
+      provinceOfOrigin: "Western",
+      religion: "United Church",
       address: {
-        street: "8 Ibadan Crescent",
-        city: "Ibadan",
-        region: "Oyo",
-        postcode: "200284",
+        street: "14 Saeraghi Road",
+        city: "Gizo",
+        region: "Western",
+        postcode: "",
+      },
+      postalAddress: { ...EMPTY_ADDRESS },
+      postalSameAsHome: true,
+      driverLicence: {
+        hasLicence: true,
+        number: "SI-WST-0277",
+        classes: "C",
+        expiry: "2027-11",
       },
     },
     education: [
       {
         id: "e1",
-        institution: "Government College Ibadan",
-        qualification: "Senior Secondary Certificate",
+        institution: "Goldie College",
+        qualification: "Form 5 certificate",
         startYear: "2014",
         endYear: "2020",
         result: "5 credits incl. English",
@@ -1121,14 +1741,32 @@ function buildSeedApplications(): Application[] {
     work: [
       {
         id: "w1",
-        employer: "Adesanya Transport Ltd",
-        role: "Driver",
+        employer: "Western Province Council",
+        role: "Transport assistant",
         startDate: "2021-02",
         endDate: "2023-12",
         current: false,
-        description: "Light vehicle deliveries across the south-west.",
+        description:
+          "Light vehicle deliveries for council teams across Gizo and outer islands.",
+        paymentType: "paid",
       },
     ],
+    serviceHistory: { previousApplication: false, previouslyPoliceOfficer: false },
+    disclosures: {
+      everInterviewedForOffence: false,
+      currentlyInCriminalActivity: false,
+      everConvictedCriminal: false,
+      everConvictedOther: false,
+      noConvictionRecorded: false,
+      warrantEverIssued: false,
+      details: "",
+    },
+    statements: {
+      personalStatement:
+        "I grew up in Gizo as one of three boys. After Form 5 at Goldie College in 2020 I worked for nearly three years as a transport assistant for the Western Province Council, mostly driving light vehicles between Gizo and the outer islands. The work taught me to be punctual, to maintain my vehicle properly, and to deal calmly with all sorts of passengers — from school groups to provincial officers. I am a regular at the United Church here and I play rugby on Saturdays for a community side. I have always wanted a job where I am useful to my community in a concrete, daily way. I think my time on the road has prepared me for staying composed in difficult situations, and I am ready to take on the discipline of recruit training.",
+      reasonForJoining:
+        "Police in Western are a daily presence — at the wharf, on patrol, at school assemblies — and the ones I have respected most treated every person fairly regardless of who they were. I want to be that kind of officer, and I want to learn the law properly so the work I do is fair and stands up in court.",
+    },
     documents: docsFor({
       "passport-photo": {
         status: "rejected",
@@ -1137,71 +1775,93 @@ function buildSeedApplications(): Application[] {
     }),
     background: {
       nextOfKin: {
-        name: "Bolanle Adesanya",
+        name: "Faye Maeli",
         relationship: "Sister",
-        phone: "+234 805 222 9988",
+        phone: "+677 7488 9988",
+        address: "14 Saeraghi Road, Gizo, Western",
       },
       references: [
         {
           id: "r1",
-          name: "Mr Kunle Ojo",
-          relationship: "Former employer",
+          name: "Mr Charles Pais",
+          relationship: "Former line manager",
           yearsKnown: "5",
-          email: "kojo@adesanya.example",
-          phone: "+234 802 333 1111",
+          email: "cpais@wpc.gov.sb",
+          phone: "+677 7488 1111",
         },
         {
           id: "r2",
-          name: "Mrs Yetunde Bello",
+          name: "Mrs Lena Iroga",
           relationship: "Community elder",
           yearsKnown: "10",
           email: "",
-          phone: "+234 802 333 2222",
+          phone: "+677 7488 2222",
         },
       ],
       declarations: { accurate: true, consent: true, medical: true },
     },
-    decision: "hold",
+    decision: "onHold",
+    pipeline: {
+      ...EMPTY_PIPELINE,
+      currentStage: "received",
+      received: {
+        allDocsPresent: false,
+        panelAcknowledged: false,
+        notes: "Passport photo rejected — awaiting re-upload before panel review.",
+      },
+    },
     reviewerNotes:
       "Document rejected; await re-upload before continuing review.",
   });
 
-  const chinma = base("APP-2026-04501", {
-    ownerEmail: "chinma.eze@example.com",
+  const maryanne = base("APP-2026-04501", {
+    ownerEmail: "maryanne.pita@example.com",
     eligibility: {
-      citizenship: "naturalised",
-      dob: ageDateForYears(24),
-      hasEducation: true,
-      heightCm: 169,
-      noFelony: true,
-      driverLicence: "B",
-      firstAid: true,
+      citizenship: "citizen",
+      noCriminalRecord: true,
+      formFiveCompleted: true,
+      medicallyFit: true,
+      physicallyFit: true,
     },
     personal: {
-      fullName: "Chinma Eze",
-      preferredName: "Chinma",
-      email: "chinma.eze@example.com",
-      phone: "+234 809 444 5566",
-      nationalId: "55667788990",
+      ...EMPTY_PERSONAL,
+      fullName: "Pita Mary-Anne",
+      preferredName: "Mary-Anne",
+      dob: "2002-07-04",
+      gender: "female",
+      email: "maryanne.pita@example.com",
+      phone: "+677 7421 5566",
+      nationalId: "SI20-00734",
+      birthPlace: "Buala",
+      provinceOfOrigin: "Isabel",
+      religion: "Anglican (Church of Melanesia)",
       address: {
-        street: "21 Aba Road",
-        city: "Port Harcourt",
-        region: "Rivers",
-        postcode: "500272",
+        street: "12 Mission Lane",
+        city: "Buala",
+        region: "Isabel",
+        postcode: "",
+      },
+      postalAddress: { ...EMPTY_ADDRESS },
+      postalSameAsHome: true,
+      driverLicence: {
+        hasLicence: true,
+        number: "SI-ISA-0098",
+        classes: "B",
+        expiry: "2029-02",
       },
     },
     education: [
       {
         id: "e1",
-        institution: "Federal Science College Port Harcourt",
-        qualification: "Senior Secondary Certificate",
+        institution: "Selwyn College",
+        qualification: "Form 5 certificate",
         startYear: "2013",
         endYear: "2019",
         result: "Distinction",
       },
       {
         id: "e2",
-        institution: "Rivers State University",
+        institution: "Solomon Islands National University",
         qualification: "Diploma in Public Administration",
         startYear: "2019",
         endYear: "2022",
@@ -1211,14 +1871,31 @@ function buildSeedApplications(): Application[] {
     work: [
       {
         id: "w1",
-        employer: "Rivers State Civil Service",
+        employer: "Isabel Provincial Government",
         role: "Administrative officer",
         startDate: "2022-08",
         endDate: "",
         current: true,
-        description: "Records management for the state secretariat.",
+        description: "Records management for the provincial secretariat.",
+        paymentType: "paid",
       },
     ],
+    serviceHistory: { previousApplication: false, previouslyPoliceOfficer: false },
+    disclosures: {
+      everInterviewedForOffence: false,
+      currentlyInCriminalActivity: false,
+      everConvictedCriminal: false,
+      everConvictedOther: false,
+      noConvictionRecorded: false,
+      warrantEverIssued: false,
+      details: "",
+    },
+    statements: {
+      personalStatement:
+        "I was born and raised in Buala and finished my Form 5 at Selwyn College with a Distinction before going on to a Diploma in Public Administration at the Solomon Islands National University in Honiara. Since 2022 I have worked as an administrative officer at the Isabel Provincial Government, where I run records management for a small team. I am known there for being meticulous with paperwork and for being calm when colleagues are under pressure. Outside work I am active in our church choir and I tutor two younger cousins in Maths every weekend. Both of my parents are public servants and I have grown up understanding that public service is demanding but worthwhile. I am ready to apply that mindset to police work.",
+      reasonForJoining:
+        "Records management has shown me how much careful, honest work it takes to keep institutions trustworthy. I want to bring the same discipline to police work. I am especially interested in investigations and evidence handling, where my administrative training will be useful from day one.",
+    },
     documents: docsFor({
       "national-id": { status: "verified" },
       transcript: { status: "verified" },
@@ -1233,66 +1910,129 @@ function buildSeedApplications(): Application[] {
     }),
     background: {
       nextOfKin: {
-        name: "Dr Obinna Eze",
+        name: "Mr Patrick Pita",
         relationship: "Father",
-        phone: "+234 809 444 7788",
+        phone: "+677 7421 7788",
+        address: "12 Mission Lane, Buala, Isabel",
       },
       references: [
         {
           id: "r1",
-          name: "Prof. Ngozi Aluko",
+          name: "Prof. Mary Tovo",
           relationship: "University lecturer",
           yearsKnown: "6",
-          email: "naluko@rsu.example",
-          phone: "+234 803 444 1111",
+          email: "mtovo@sinu.edu.sb",
+          phone: "+677 7421 1111",
         },
         {
           id: "r2",
-          name: "Mr Tobi Wokoma",
+          name: "Mr Thomas Lonu",
           relationship: "Line manager",
           yearsKnown: "3",
-          email: "twokoma@rscs.example",
-          phone: "+234 803 444 2222",
+          email: "tlonu@isabel.gov.sb",
+          phone: "+677 7421 2222",
         },
       ],
       declarations: { accurate: true, consent: true, medical: true },
     },
-    decision: "offer",
+    decision: "selected",
+    pipeline: {
+      currentStage: "closed",
+      received: {
+        allDocsPresent: true,
+        panelAcknowledged: true,
+        notes: "Complete package; routed to panel within 24 h.",
+      },
+      preSelection: {
+        citizenship: "passed",
+        criminalRecord: "passed",
+        formFive: "passed",
+        medical: "passed",
+        physical: "passed",
+        refereesContacted: true,
+        notes: "Both referees responded positively. Criminal record check clear.",
+      },
+      selection: {
+        exam: {
+          dictation: { score: 78, status: "passed" },
+          mathematics: { score: 82, status: "passed" },
+          generalKnowledge: { score: 71, status: "passed" },
+          readingComprehension: { score: 88, status: "passed" },
+          essay: { score: 74, status: "passed" },
+          date: "2026-04-15",
+        },
+        fitness: {
+          run: { raw: 13 * 60 + 25, status: "passed" }, // 13:25 — under 14:00 women's threshold
+          pushUps: { raw: 18, status: "passed" }, // ≥ 8
+          sitUps: { raw: 42, status: "passed" }, // ≥ 35
+          date: "2026-04-16",
+          note: "Strong overall performance.",
+        },
+        interview: {
+          goodCharacter: { rating: 5, comments: "Honest, fair, gave concrete examples." },
+          learning: { rating: 4, comments: "Diploma graduate; eager to keep studying." },
+          teamMember: { rating: 5, comments: "Clear teamwork experience from civil service role." },
+          thinkingSkills: { rating: 4, comments: "Solid problem framing in scenario question." },
+          communication: { rating: 5, comments: "Confident, clear, well-prepared." },
+          date: "2026-04-22",
+          panelNotes: "Strongest candidate on panel today. Recommended.",
+        },
+      },
+      final: {
+        recommendation: "select",
+        commissionerApproved: true,
+        notifiedAt: "2026-04-29",
+        finalReport:
+          "Candidate has cleared every stage. Pre-selection clean, entrance exam passed in all five parts (range 71–88), Entry Fitness Test passed with margin, and Selection Interview scored 4–5 across all rubrics. Recommended for the 2026-B intake.",
+      },
+    },
     reviewerNotes:
-      "All criteria met. Conditional offer extended for 2026-B intake.",
+      "All criteria met. Final report filed; Commissioner approved on 29 Apr.",
     reviewedAt: now,
     reviewedBy: "records.officer@example.com",
   });
 
-  const bola = base("APP-2026-04778", {
-    ownerEmail: "bola.williams@example.com",
+  const wilson = base("APP-2026-04778", {
+    ownerEmail: "wilson.ramo@example.com",
     eligibility: {
       citizenship: "citizen",
-      dob: ageDateForYears(22),
-      hasEducation: true,
-      heightCm: 170,
-      noFelony: true,
-      driverLicence: "B",
-      firstAid: false,
+      noCriminalRecord: true,
+      formFiveCompleted: true,
+      medicallyFit: true,
+      physicallyFit: true,
     },
     personal: {
-      fullName: "Bola Williams",
-      preferredName: "Bola",
-      email: "bola.williams@example.com",
-      phone: "+234 802 666 7788",
-      nationalId: "33445566778",
+      ...EMPTY_PERSONAL,
+      fullName: "Ramo Wilson",
+      preferredName: "Wilson",
+      dob: "2004-03-22",
+      gender: "male",
+      email: "wilson.ramo@example.com",
+      phone: "+677 7397 7788",
+      nationalId: "SI23-00112",
+      birthPlace: "Auki",
+      provinceOfOrigin: "Malaita",
+      religion: "Seventh-day Adventist",
       address: {
-        street: "5 Garden City Lane",
-        city: "Enugu",
-        region: "Enugu",
-        postcode: "400281",
+        street: "8 Lilisiana Road",
+        city: "Auki",
+        region: "Malaita",
+        postcode: "",
+      },
+      postalAddress: { ...EMPTY_ADDRESS },
+      postalSameAsHome: true,
+      driverLicence: {
+        hasLicence: false,
+        number: "",
+        classes: "",
+        expiry: "",
       },
     },
     education: [
       {
         id: "e1",
-        institution: "Loyola College Enugu",
-        qualification: "Senior Secondary Certificate",
+        institution: "Su'u National Secondary School",
+        qualification: "Form 5 certificate",
         startYear: "2016",
         endYear: "2022",
         result: "5 credits",
@@ -1304,27 +2044,37 @@ function buildSeedApplications(): Application[] {
     }),
     background: {
       nextOfKin: {
-        name: "Chinedu Williams",
+        name: "Eric Ramo",
         relationship: "Brother",
-        phone: "+234 802 666 1010",
+        phone: "+677 7397 1010",
+        address: "8 Lilisiana Road, Auki, Malaita",
       },
       references: [
         {
           id: "r1",
-          name: "Father Anthony Eke",
-          relationship: "Parish priest",
+          name: "Pastor John Manele",
+          relationship: "Local pastor",
           yearsKnown: "12",
           email: "",
-          phone: "+234 802 666 1111",
+          phone: "+677 7397 1111",
         },
       ],
       declarations: { accurate: true, consent: true, medical: true },
     },
-    decision: "pending",
-    reviewerNotes: "Waiting on proof of address upload before review.",
+    decision: "shortlisted",
+    pipeline: {
+      ...EMPTY_PIPELINE,
+      currentStage: "received",
+      received: {
+        allDocsPresent: false,
+        panelAcknowledged: false,
+        notes: "Missing proof of citizenship document — awaiting upload.",
+      },
+    },
+    reviewerNotes: "Waiting on proof of citizenship upload before review.",
   });
 
-  return [chinma, adaeze, tunde, bola];
+  return [maryanne, joycelyn, theo, wilson];
 }
 
 /* ============================================================

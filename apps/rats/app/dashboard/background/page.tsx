@@ -13,6 +13,7 @@ import {
   Field,
   Icon,
   Input,
+  Textarea,
 } from "@/components/ui";
 import {
   EMPTY_BACKGROUND,
@@ -185,7 +186,21 @@ export default function BackgroundPage() {
                 type="tel"
                 value={bg.nextOfKin.phone}
                 onChange={(e) => updateNok("phone", e.target.value)}
-                placeholder="+234 800 000 0000"
+                placeholder="+677 000 0000"
+              />
+            </Field>
+            <Field
+              label="Address"
+              htmlFor="nok-address"
+              required
+              hint="Full postal or residential address."
+            >
+              <Textarea
+                id="nok-address"
+                value={bg.nextOfKin.address}
+                onChange={(e) => updateNok("address", e.target.value)}
+                placeholder="Street, town, province"
+                rows={2}
               />
             </Field>
           </div>

@@ -403,7 +403,7 @@ export default function DesignSystemPage() {
                 <Input
                   id="ex-name"
                   placeholder="Jane Doe"
-                  defaultValue="Jane Adaeze Okafor"
+                  defaultValue="Joycelyn Marina Tagivetua"
                 />
               </Field>
 
@@ -593,7 +593,7 @@ export default function DesignSystemPage() {
 
             <AppCard
               initials="JO"
-              name="Jane Adaeze Okafor"
+              name="Joycelyn Marina Tagivetua"
               applicantId="APP-2026-04713 · Cohort 2026-B"
               meta={
                 <>
@@ -792,10 +792,10 @@ export default function DesignSystemPage() {
               </p>
               <div className="grid-2">
                 <Field label="Street address">
-                  <Input defaultValue="14 Oba Akran Avenue" />
+                  <Input defaultValue="5 Vavaea Ridge" />
                 </Field>
                 <Field label="City">
-                  <Input defaultValue="Ikeja" />
+                  <Input defaultValue="Honiara" />
                 </Field>
               </div>
             </div>
@@ -999,46 +999,34 @@ export default function DesignSystemPage() {
               progress="6 / 7"
               criteria={[
                 {
-                  name: "Citizenship",
-                  detail: "National ID confirmed",
+                  name: "Citizen or permanent resident of Solomon Islands",
+                  detail: "Solomon Islands citizen by birth",
                   status: "met",
                   badge: <Badge variant="success">Met</Badge>,
                 },
                 {
-                  name: "Age — at least 21 by start of academy",
-                  detail: "DOB 12 Aug 2003 · 22 years 10 months at intake",
-                  status: "met",
-                  badge: <Badge variant="success">Met</Badge>,
-                },
-                {
-                  name: "Education — Senior Secondary Certificate",
-                  detail: "Federal Government College Lagos · 2021",
-                  status: "met",
-                  badge: <Badge variant="success">Met</Badge>,
-                },
-                {
-                  name: "Height — minimum 1.67 m",
-                  detail: "Recorded 1.72 m at medical screening",
-                  status: "met",
-                  badge: <Badge variant="success">Met</Badge>,
-                },
-                {
-                  name: "No felony convictions",
+                  name: "No criminal record",
                   detail: "Self-declared · subject to background verification",
                   status: "met",
                   badge: <Badge variant="success">Met</Badge>,
                 },
                 {
-                  name: "Driver's licence — Class B or higher",
-                  detail: "Class B · expires 2028-04",
+                  name: "Successfully completed Form 5 or higher",
+                  detail: "Form 5 certificate uploaded",
                   status: "met",
                   badge: <Badge variant="success">Met</Badge>,
                 },
                 {
-                  name: "First-aid certification (within 24 months)",
-                  detail: "Not provided · enrol in a short course before submitting",
-                  status: "fail",
+                  name: "Medically fit for police duties",
+                  detail: "Doctor-signed Medical Fitness Form required",
+                  status: "pending",
                   badge: <Badge variant="warn">Action required</Badge>,
+                },
+                {
+                  name: "Physically fit for the Entry Fitness Test",
+                  detail: "Confident of passing 2.4 km run, press-ups, and sit-ups",
+                  status: "met",
+                  badge: <Badge variant="success">Met</Badge>,
                 },
               ]}
             />

@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
 import {
+  AlertTriangle,
   Briefcase,
   CheckSquare,
   ClipboardList,
@@ -12,6 +13,7 @@ import {
   HelpCircle,
   LayoutDashboard,
   MessageCircle,
+  ScrollText,
   Upload,
   User,
 } from "lucide-react";
@@ -36,6 +38,8 @@ export function DashboardSidebar() {
           personal: stageState(application, "personal"),
           education: stageState(application, "education"),
           work: stageState(application, "work"),
+          disclosures: stageState(application, "disclosures"),
+          statements: stageState(application, "statements"),
           documents: stageState(application, "documents"),
           background: stageState(application, "background"),
         }
@@ -56,7 +60,7 @@ export function DashboardSidebar() {
           },
           {
             icon: User,
-            label: "Personal details",
+            label: "Personal particulars",
             href: "/dashboard/personal",
             active: pathname?.startsWith("/dashboard/personal") ?? false,
             badge: counts ? tickOf(counts.personal.complete ? "complete" : "todo") : undefined,
@@ -70,10 +74,24 @@ export function DashboardSidebar() {
           },
           {
             icon: Briefcase,
-            label: "Work history",
+            label: "Employment",
             href: "/dashboard/work",
             active: pathname?.startsWith("/dashboard/work") ?? false,
             badge: counts ? tickOf(counts.work.complete ? "complete" : "todo") : undefined,
+          },
+          {
+            icon: AlertTriangle,
+            label: "Disclosures",
+            href: "/dashboard/disclosures",
+            active: pathname?.startsWith("/dashboard/disclosures") ?? false,
+            badge: counts ? tickOf(counts.disclosures.complete ? "complete" : "todo") : undefined,
+          },
+          {
+            icon: ScrollText,
+            label: "Statements",
+            href: "/dashboard/statements",
+            active: pathname?.startsWith("/dashboard/statements") ?? false,
+            badge: counts ? tickOf(counts.statements.complete ? "complete" : "todo") : undefined,
           },
           {
             icon: Upload,

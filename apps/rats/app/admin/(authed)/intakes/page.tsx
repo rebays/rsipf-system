@@ -57,7 +57,7 @@ export default function IntakesListPage() {
     for (const a of applications) {
       const prev = map.get(a.intakeId) ?? { total: 0, offers: 0 };
       prev.total += 1;
-      if (a.decision === "offer") prev.offers += 1;
+      if (a.decision === "selected") prev.offers += 1;
       map.set(a.intakeId, prev);
     }
     return map;

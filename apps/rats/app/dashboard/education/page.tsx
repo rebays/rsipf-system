@@ -123,7 +123,7 @@ export default function EducationPage() {
                   id={`edu-inst-${entry.id}`}
                   value={entry.institution}
                   onChange={(e) => updateEntry(entry.id, { institution: e.target.value })}
-                  placeholder="Federal Government College Lagos"
+                  placeholder="e.g. King George VI National Secondary School"
                 />
               </Field>
               <Field
@@ -135,7 +135,7 @@ export default function EducationPage() {
                   id={`edu-qual-${entry.id}`}
                   value={entry.qualification}
                   onChange={(e) => updateEntry(entry.id, { qualification: e.target.value })}
-                  placeholder="Senior Secondary Certificate"
+                  placeholder="Form 5 certificate"
                 />
               </Field>
               <Field label="Start year" htmlFor={`edu-start-${entry.id}`}>
